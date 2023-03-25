@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title></title>
+  </head>
+  <body>
+    <div
+      id="WebGL-output"
+      style="min-height: 600px; min-width: 800px; border: solid 1px r"
+    ></div>
+  </body>
+
+  <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+  <script type="text/javascript" src="three.min.js"></script>
+  <script type="text/javascript" src="d3.v4.min.js"></script>
+  <script type="text/javascript" src="d3-threeD.js"></script>
+  <script type="text/javascript" src="TrackballControls.js"></script>
+  <script type="text/javascript" src="datav3.q.initwebgl.js"></script>
+  <script type="text/javascript" src="world-countries.json"></script>
+
+  <script type="text/javascript">
+    var direction_light; // 光线1
+    var direction_light_2; // 光线2
+    // 增加光照，使得地图表面变色
+    direction_light = new THREE.DirectionalLight(0x0e4d72, 0.6);
+    direction_light.position.set(0, 1, 0);
+
+    direction_light_2 = new THREE.DirectionalLight(0x87cefa, 1);
+    direction_light_2.position.set(0, 0, -1);
+
+    scene.add(direction_light);
+    scene.add(direction_light_2);
+
+    var projection = d3
+      .geoEquirectangular()
+      // .rotate([-150, 0, 0])
+      // .center([0, 45])
+      .scale(10000); // 地图设置自定义投影方式
+    var map_amount = 400; // 地图的厚度
+    var extrudeSettings = {
+      amount: map_amount,
+      bevelSegments: 0,
+      bevelSize: 0,
+      bevelThickness: 0,
+    };
+    var path = d3.geoPath(projection); // geo路径生成器
+    var features = worldGeojson.features;
+    var country_geomap_map = new THREE.Group();
+    for (var i = 0; i < features.length; i++) {
+      var feature = features[i];
+      var country_code = feature["properties"]["iso_a2"];
+      if (country_code == "AQ") {
+        // 过滤处理，去除南极洲
+        continue;
+      } else {
+        var map_mesh = new THREE.Mesh(
+          new THREE.ExtrudeGeometry(
+            transformSVGPathExposed(path(feature)),
+            extrudeSettings
+          ),
+          new THREE.MeshLambertMaterial({ color: 0xffffff, depthTest: true })
+        );
+        map_mesh.name = "map_" + country_code;
+        country_geomap_map.add(map_mesh);
+      }
+    }
+    scene.add(country_geomap_map);
+    country_geomap_map.rotateZ(110);
+  </script>
+</html>
